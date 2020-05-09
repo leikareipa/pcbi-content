@@ -1,0 +1,486 @@
+diff -crB 16/src/Makefile.in mod/16/src/Makefile.in
+*** 16/src/Makefile.in	2020-04-19 18:31:20.000000000 +0300
+--- mod/16/src/Makefile.in	2020-05-09 06:19:04.269210892 +0300
+***************
+*** 546,552 ****
+  INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+  LDFLAGS = @LDFLAGS@
+  LIBOBJS = @LIBOBJS@
+! LIBS = @LIBS@
+  LTLIBOBJS = @LTLIBOBJS@
+  MAKEINFO = @MAKEINFO@
+  MKDIR_P = @MKDIR_P@
+--- 546,552 ----
+  INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+  LDFLAGS = @LDFLAGS@
+  LIBOBJS = @LIBOBJS@
+! LIBS = -lrt @LIBS@
+  LTLIBOBJS = @LTLIBOBJS@
+  MAKEINFO = @MAKEINFO@
+  MKDIR_P = @MKDIR_P@
+diff -crB 16/src/pc.c mod/16/src/pc.c
+*** 16/src/pc.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/pc.c	2020-05-09 06:20:14.333062340 +0300
+***************
+*** 510,516 ****
+  
+  void runpc()
+  {
+!         char s[200];
+          int done=0;
+          int cycles_to_run = cpu_get_speed() / 100;
+          
+--- 510,516 ----
+  
+  void runpc()
+  {
+!         char s[220]; // Modified for PCbi. Add more room for a longer window title.
+          int done=0;
+          int cycles_to_run = cpu_get_speed() / 100;
+          
+***************
+*** 582,588 ****
+          if (win_title_update)
+          {
+                  win_title_update=0;
+!                 sprintf(s, "PCem v16 - %i%% - %s - %s - %s", fps, model_getname(), models[model].cpu[cpu_manufacturer].cpus[cpu].name, (!mousecapture) ? "Click to capture mouse" : ((mouse_get_type(mouse_type) & MOUSE_TYPE_3BUTTON) ? "Press CTRL-END to release mouse" : "Press CTRL-END or middle button to release mouse"));
+                  set_window_title(s);
+          }
+          done++;
+--- 582,588 ----
+          if (win_title_update)
+          {
+                  win_title_update=0;
+!                 sprintf(s, "A headless PCem v16 for PCbi - %i%% - %s - %s - %s", fps, model_getname(), models[model].cpu[cpu_manufacturer].cpus[cpu].name, (!mousecapture) ? "Click to capture mouse" : ((mouse_get_type(mouse_type) & MOUSE_TYPE_3BUTTON) ? "Press CTRL-END to release mouse" : "Press CTRL-END or middle button to release mouse"));
+                  set_window_title(s);
+          }
+          done++;
+diff -crB 16/src/pc.xrc mod/16/src/pc.xrc
+*** 16/src/pc.xrc	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/pc.xrc	2020-05-09 06:20:30.045029003 +0300
+***************
+*** 3632,3638 ****
+  					<flag>wxALL</flag>
+  					<border>5</border>
+  					<object class="wxStaticText">
+! 						<label>PCem v14\nhttps://pcem-emulator.co.uk/\n\nThis program is licensed under the GNU General Public License version 2.\nSee COPYING for more details.\n\nToolbar-icons made by Roundicons (https://roundicons.com/) from www.flaticon.com\nOther icons made by FatCow (http://www.fatcow.com/free-icons/)</label>
+  						<wrap>-1</wrap>
+  					</object>
+  				</object>
+--- 3632,3638 ----
+  					<flag>wxALL</flag>
+  					<border>5</border>
+  					<object class="wxStaticText">
+! 						<label>PCem v16\nhttps://pcem-emulator.co.uk/\n\nThis program is licensed under the GNU General Public License version 2.\nSee COPYING for more details.\n\nToolbar-icons made by Roundicons (https://roundicons.com/) from www.flaticon.com\nOther icons made by FatCow (http://www.fatcow.com/free-icons/)</label>
+  						<wrap>-1</wrap>
+  					</object>
+  				</object>
+diff -crB 16/src/wx-sdl2.c mod/16/src/wx-sdl2.c
+*** 16/src/wx-sdl2.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2.c	2020-05-09 06:21:33.104895123 +0300
+***************
+*** 135,140 ****
+--- 135,151 ----
+  
+  void updatewindowsize(int x, int y)
+  {
++         // Modified for PCbi. Force the PCem window to a small, static size.
++         #if __linux__ 
++                 x = 60;
++                 y = 40;
++         #else
++                 // Use a bigger window size than for Linux, to avoid problems with
++                 // mouse grab clipping the menu bar.
++                 x = 100;
++                 y = 190;
++         #endif
++ 
+          video_width = x;
+          video_height = y;
+  
+***************
+*** 1157,1159 ****
+--- 1168,1182 ----
+          }
+          return 0;
+  }
++ 
++ // Added to interface with PCbi. Mounts (or attempts to mount) the given ISO
++ // image.
++ void pcbi_mount_iso(char *filename)
++ {
++         atapi->exit();
++         atapi_close();
++         image_open(filename);
++         cdrom_drive = CDROM_IMAGE;
++ 
++         return;
++ }
+diff -crB 16/src/wx-sdl2-display.c mod/16/src/wx-sdl2-display.c
+*** 16/src/wx-sdl2-display.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2-display.c	2020-05-09 06:22:19.664796197 +0300
+***************
+*** 302,309 ****
+          }
+          else
+          {
+!                 rect.x = SDL_WINDOWPOS_CENTERED;
+!                 rect.y = SDL_WINDOWPOS_CENTERED;
+                  rect.w = 640;
+                  rect.h = 480;
+          }
+--- 302,311 ----
+          }
+          else
+          {
+!                 // Modified for PCbi.
+!                 rect.x = 0;
+!                 rect.y = 0;
+! 
+                  rect.w = 640;
+                  rect.h = 480;
+          }
+diff -crB 16/src/wx-sdl2-display-win.c mod/16/src/wx-sdl2-display-win.c
+*** 16/src/wx-sdl2-display-win.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2-display-win.c	2020-05-09 06:22:19.664796197 +0300
+***************
+*** 528,535 ****
+          }
+          else
+          {
+!                 rect.x = SDL_WINDOWPOS_CENTERED;
+!                 rect.y = SDL_WINDOWPOS_CENTERED;
+                  rect.w = 640;
+                  rect.h = 480;
+          }
+--- 528,537 ----
+          }
+          else
+          {
+!                 // Modified for PCbi.
+!                 rect.x = 0;
+!                 rect.y = 0;
+!                 
+                  rect.w = 640;
+                  rect.h = 480;
+          }
+diff -crB 16/src/wx-sdl2.h mod/16/src/wx-sdl2.h
+*** 16/src/wx-sdl2.h	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2.h	2020-05-09 06:25:18.868414936 +0300
+***************
+*** 7,12 ****
+--- 7,15 ----
+  int getsfile(void* hwnd, char *f, char *fn, char *dir, char *ext);
+  void screenshot_taken(unsigned char* rgb, int width, int height);
+  
++ // Modified for PCbi.
++ void pcbi_mount_iso(char *filename);
++ 
+  #ifdef __cplusplus
+  }
+  #endif
+diff -crB 16/src/wx-sdl2-status.c mod/16/src/wx-sdl2-status.c
+*** 16/src/wx-sdl2-status.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2-status.c	2020-05-09 06:23:07.204695127 +0300
+***************
+*** 31,47 ****
+  drive_info_t* get_machine_info(char* s, int* num_drive_info) {
+          int drive, i;
+          int pos = 0;
+!         sprintf(s,
+!                         "Model: %s\n"
+!                         "CPU: %s",
+!                         model_getname(),
+!                         models[model].cpu[cpu_manufacturer].cpus[cpu].name);
+!         if (emulation_state == EMULATION_RUNNING)
+!                 sprintf(s+strlen(s), "\nEmulation speed: %d%%", fps);
+!         else if (emulation_state == EMULATION_PAUSED)
+!                 strcat(s, "\nEmulation is paused.");
+!         else
+!                 strcat(s, "\nEmulation is not running.");
+  
+          for (i = 0; i < 2; ++i)
+          {
+--- 31,52 ----
+  drive_info_t* get_machine_info(char* s, int* num_drive_info) {
+          int drive, i;
+          int pos = 0;
+! 
+!         // Modified for PCbi.
+!         if (s)
+!         {
+!                 sprintf(s,
+!                                 "Model: %s\n"
+!                                 "CPU: %s",
+!                                 model_getname(),
+!                                 models[model].cpu[cpu_manufacturer].cpus[cpu].name);
+!                 if (emulation_state == EMULATION_RUNNING)
+!                         sprintf(s+strlen(s), "\nEmulation speed: %d%%", fps);
+!                 else if (emulation_state == EMULATION_PAUSED)
+!                         strcat(s, "\nEmulation is paused.");
+!                 else
+!                         strcat(s, "\nEmulation is not running.");
+!         }
+  
+          for (i = 0; i < 2; ++i)
+          {
+diff -crB 16/src/wx-sdl2-video.c mod/16/src/wx-sdl2-video.c
+*** 16/src/wx-sdl2-video.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2-video.c	2020-05-09 06:24:55.072465603 +0300
+***************
+*** 276,281 ****
+--- 276,498 ----
+          screen_copy = NULL;
+  }
+  
++ // Added to interface with PCbi. Opens a memory-mapped file (shared memory) of
++ // the given name and size, and returns a pointer to its contents as an array.
++ #if __linux__
++ #include <sys/mman.h>
++ #include <fcntl.h>
++ static unsigned char* pcbi_acquire_shared_mem(const char *name, const size_t size)
++ {
++         int fd;
++         unsigned char *m;
++ 
++         fd = shm_open(name, O_RDWR, 0666);
++         if (fd < 0) { exit(EXIT_FAILURE); }
++         m = (unsigned char*)mmap(NULL, size, 0666, MAP_SHARED, fd, 0);
++         if (m == NULL) { exit(EXIT_FAILURE); }
++ 
++         return m;
++ }
++ #elif _WIN32
++ #define NOGDI // Prevent BITMAP from being redeclared when including windows.h.
++ #include <windows.h>
++ static unsigned char* pcbi_acquire_shared_mem(const char *name, const size_t size)
++ {
++         HANDLE hf;
++         unsigned char *m;
++ 
++         hf = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
++         if (hf == NULL) { exit(EXIT_FAILURE); }
++         m = (unsigned char*)MapViewOfFile(hf, FILE_MAP_ALL_ACCESS, 0, 0, size);
++         if (m == NULL) { exit(EXIT_FAILURE); }
++ 
++         return m;
++ }
++ #else
++ #error "Unknown platform."
++ #endif
++ 
++ // Added to interface with PCbi. Establishes communication with PCbi's shared
++ // memory buffers, and doles out pointers to it.
++ typedef enum
++ {
++         PCBI_SMEM_SCREEN,
++         PCBI_SMEM_STATUS,
++         PCBI_SMEM_STATUS_MOUSEGRAB
++ } pcbi_shared_mem_type_e;
++ #include <assert.h>
++ static unsigned char* pcbi_shared_mem(const pcbi_shared_mem_type_e mem)
++ {
++         unsigned char *p = NULL;
++         static int sharedMemBeenInit = 0;
++         static unsigned char *sharedInitBuf;
++         static unsigned char *sharedStatusBuf;
++         static unsigned char *sharedScreenBuf;
++ 
++         // Establish access to shared memory buffers if it hasn't been done already.
++         // The buffers will have already been created by PCbi. If not, PCem will
++         // likely terminate around here.
++         if (!sharedMemBeenInit)
++         {
++                 unsigned int screenBufSize;
++                 unsigned int statusBufSize;
++                 const unsigned int initBufSize = 9;
++                 const char sharedInitBufName[] = "pcbi_pcem_init";
++                 const char sharedStatusBufName[] = "pcbi_pcem_status";
++                 const char sharedScreenBufName[] = "pcbi_pcem_screen";
++ 
++                 // Initialization buffer. Lets PCbi tell PCem how large the other buffers are.
++                 sharedInitBuf = pcbi_acquire_shared_mem(sharedInitBufName, initBufSize);
++                 statusBufSize = ((unsigned int*)sharedInitBuf)[0];
++                 screenBufSize = ((unsigned int*)sharedInitBuf)[1];
++ 
++                 sharedStatusBuf = pcbi_acquire_shared_mem(sharedStatusBufName, statusBufSize);
++                 sharedScreenBuf = pcbi_acquire_shared_mem(sharedScreenBufName, screenBufSize);
++ 
++                 sharedMemBeenInit = 1;
++ 
++                 // Signal to PCem that we've loaded in the shared buffers.
++                 sharedInitBuf[8] = 1;
++         }
++ 
++         // Get a pointer to the shared buffer that the caller requested.
++         switch (mem)
++         {
++                 case PCBI_SMEM_SCREEN: 	        { p = sharedScreenBuf;		break;	}
++                 case PCBI_SMEM_STATUS:          { p = sharedStatusBuf;		break;	}
++                 case PCBI_SMEM_STATUS_MOUSEGRAB:{ p = &sharedStatusBuf[3];	break;	}
++         }
++ 
++         assert(p != NULL);
++         return p;
++ }
++ 
++ // Added to interface with PCbi.
++ static void pcbi_update_mouse_grab(SDL_Window *const window)
++ {
++         extern int mousecapture;
++         unsigned char *mouseGrabStatus;
++ 
++         mouseGrabStatus = pcbi_shared_mem(PCBI_SMEM_STATUS_MOUSEGRAB);
++ 
++         // Grab the mouse.
++         if (*mouseGrabStatus == 1)
++         {
++                 mousecapture = 1;
++ 
++                 // Make sure the window is properly in focus for input.
++                 SDL_ShowWindow(window); 
++                 SDL_RaiseWindow(window);
++ 
++                 SDL_GetRelativeMouseState(0, 0);
++                 SDL_SetWindowGrab(window, SDL_TRUE);
++                 SDL_SetRelativeMouseMode(SDL_TRUE);
++ 
++                 *mouseGrabStatus = 0;
++         }
++         // Release the mouse grab.
++         else if (*mouseGrabStatus == 2)
++         {
++                 SDL_SetWindowGrab(window, SDL_FALSE);
++                 SDL_SetRelativeMouseMode(SDL_FALSE);
++                 mousecapture = 0;
++ 
++                 *mouseGrabStatus = 0;
++         }
++ 
++         return;
++ }
++ 
++ // Added to interface with PCbi. Mounts a shared ISO file.
++ #include "wx-sdl2.h"
++ static void pcbi_mount_shared_iso(void)
++ {
++         pcbi_mount_iso("pcbi_shared_image.iso");
++ 
++         return;
++ }
++ 
++ // Added to interface with PCbi. Updates the shared data buffer with status
++ // information about the emulated machine's disk drives. Pass to this a pointer
++ // in the shared buffer to the offset starting at which these data should be
++ // written.
++ #include <assert.h>
++ #include "wx-common.h"
++ drive_info_t* get_machine_info(char* s, int* num_drive_info);
++ static void pcbi_update_drive_status_lights_info(char *const sharedDataBuffer)
++ {
++         unsigned int i, numDrives = 0;
++         const unsigned int numParams = 3; // How many parameters per drive we store into the shared buffer. Each parameter must be 1 byte in size.
++         const drive_info_t *const driveInfo = get_machine_info(NULL, &numDrives);
++ 
++         assert(numDrives <= ((unsigned char)(~0)));
++         sharedDataBuffer[0] = (unsigned char)numDrives;
++ 
++         for (i = 0; i < numDrives; i++)
++         {
++                 unsigned int offs = (1 + (i * numParams));
++                 sharedDataBuffer[offs++] = (char)driveInfo[i].drive_letter;
++                 sharedDataBuffer[offs++] = (unsigned char)driveInfo[i].type;
++                 sharedDataBuffer[offs++] = (unsigned char)driveInfo[i].readflash; // Whether the drive's indication light should be on.
++         }
++ 
++         return;
++ }
++ 
++ // Added to interface with PCbi. Copies the given bitmap's pixel data into a
++ // memory buffer shared with PCbi.
++ static void pcbi_copy_screen_to_shared_mem(const BITMAP *const screen, const SDL_Rect *const screen_rect)
++ {
++         int y;
++         extern int render_fps, fps; // PCem's emulation rate.
++         unsigned char *statusBuf, *screenBuf;
++         const unsigned int cc = 4; // Number of color channels. Doesn't seem to be defined in a concrete variable in PCem, so just guesstimate the value here.
++ 
++         statusBuf = pcbi_shared_mem(PCBI_SMEM_STATUS);
++         screenBuf = pcbi_shared_mem(PCBI_SMEM_SCREEN);
++ 
++         // Let PCbi know the rate PCem is running.
++         statusBuf[1] = (unsigned char)fps;
++ 
++         /// Temp hack.
++         // See if PCbi has requested that PCem load a special shared ISO image.
++         if (statusBuf[999] == 1)
++         {
++                 pcbi_mount_shared_iso();
++                 statusBuf[999] = 0;
++         }
++ 
++         // PCbi will set this value to 2 once it's done accessing the pixel buffer for
++         // drawing its current frame. PCem should only update the pixel buffer if that's
++         // the case, otherwise rendering errors will occur in PCbi. If the buffer is
++         // currently in use by PCbi, don't wait around, just check back on it again
++         // next time this function is called.
++         if (statusBuf[0] != 2)
++         {
++                 // Tell PCbi we called but it wasn't home.
++                 statusBuf[2] = 1;
++ 
++                 return;
++         }
++ 
++         // Give PCbi information about how it should draw drive status lights.
++         /// Temp hack. This call should be in a more suitable place.
++         pcbi_update_drive_status_lights_info(&statusBuf[100]);
++ 
++         // Copy the screen's pixel data over. While at it, flip the image on the Y axis.
++         *((unsigned short*)(&screenBuf[0])) = screen_rect->w;
++         *((unsigned short*)(&screenBuf[2])) = screen_rect->h;
++         for (y = 0; y < screen_rect->h; y++)
++         {
++                 memcpy(screenBuf + 4 + ((screen_rect->h - y - 1) * screen_rect->w * cc), screen->dat + (y * screen->w * cc), screen_rect->w * cc);
++         }
++ 
++         // Signal to PCbi that PCem is done updating the shared pixel data.
++         statusBuf[0] = 1;
++ 
++         return;
++ }
++ 
+  int sdl_renderer_update(SDL_Window* window)
+  {
+          int render = 0;
+***************
+*** 288,295 ****
+--- 505,517 ----
+                          memcpy(&updated_rect_copy, &updated_rect, sizeof(updated_rect));
+                          memcpy(screen_copy->dat + (updated_rect.y * screen_copy->w * 4), screen->dat + (updated_rect.y * screen->w * 4), updated_rect.h * screen->w * 4);
+                  }
++                 // Modified for PCbi.
+                  else
++                 {
++                         pcbi_copy_screen_to_shared_mem(screen, &blit_rect);
++                         pcbi_update_mouse_grab(window); /// Temp hack.
+                          renderer->update(window, updated_rect, screen);
++                 }
+                  texture_rect.w = blit_rect.w;
+                  texture_rect.h = blit_rect.h;
+                  render = 1;
+diff -crB 16/src/wx-sdl2-video-renderer.c mod/16/src/wx-sdl2-video-renderer.c
+*** 16/src/wx-sdl2-video-renderer.c	2020-04-19 18:29:28.000000000 +0300
+--- mod/16/src/wx-sdl2-video-renderer.c	2020-05-09 06:25:18.196416367 +0300
+***************
+*** 71,76 ****
+--- 71,79 ----
+  
+  void sdl_video_renderer_update(SDL_Window* window, SDL_Rect updated_rect, BITMAP* screen)
+  {
++         // Modified for PCbi. Don't bother updating PCem's own display.
++         return;
++ 
+          SDL_UpdateTexture(texture, &updated_rect, &((uint32_t*) screen->dat)[updated_rect.y * screen->w + updated_rect.x], screen->w * 4);
+  }
+  
