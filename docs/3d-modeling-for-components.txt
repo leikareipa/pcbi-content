@@ -1,0 +1,130 @@
+Title: 3D modeling PCbi components
+Author: Tarpeeksi Hyvae Soft
+Published: 24 Jan 2018
+Updated: 13 May 2020
+
+The 3D component models in PCbi were created using Blender 2.7, exported into
+OBJ, and converted into a custom .component format for loading into PCbi. (See
+PCbi's components/ directory, which contains the resultant .component files.)
+
+A component's 3D model will consist of a number of meshes, one or more of which
+represent the component's connector(s), e.g. the PCI connector on a video card.
+For instance, the model of a sound card might have one mesh for the card's body
+and another for its card edge ISA connector.
+
+The mesh names (object names in Blender) encode metadata by which PCbi will
+recognize properties of the component. Most importantly, each connector mesh's
+name provides the connector's type, gender, and orientation.
+
+Consider this mesh name:
+
+    m_pci32_0.-z+x
+
+Here, m defines the connector's gender, which is either m for male or f for
+female. The string "pci32" defines this as a 32-bit PCI connector. The number 0
+represents the connector's id number - in this case, this is the component's
+first PCI connector, hence the value 0. If this component were a motherboard,
+you might also see pci32_1, pci32_2, etc., and perhaps also isa16_0, isa16_1,
+and so on.
+
+The following connector types (e.g. pci32 => 32-bit PCI) are recognized by
+PCbi and can thus be used in component models:
+
+    Connector type           Corresponding mesh name
+    ------------------------------------------------
+    CNR                      cnr
+    VLB                      vlb
+    PCI 32-bit               pci32
+    PCI 64-bit               pci64
+    ISA 8-bit                isa8
+    ISA 16-bit               isa16
+    Micro Channel            mca
+    CELP                     celp
+    DRAM SIMM                dram
+    FPM SIMM                 fpmdram
+    EDO SIMM                 edodram
+    SDRAM DIMM               sdram
+    SDRAM Socket             sdram1
+    PS2/Mouse                ps2mouse
+    PS2/Keyboard             ps2keyb
+    Parallel ATA 40-pin      pata40
+    Parallel ATA 34-pin      pata34
+    DE-9                     de9
+    DE-15                    de15
+    DB-25                    db25
+    DA-15                    da15
+    SLI                      sli
+    BIOS                     bios
+    80286                    cpu286
+    80287 Coprocessor        cpu287co
+    80386 SX                 cpu386sx
+    80386 DX                 cpu386dx
+    80387 Coprocessor        cpu387co
+    Socket 3                 cpus3
+    80487 Coprocessor        cpu487co
+    Socket 4                 cpus4
+    Socket 5                 cpus5
+    Socket 6                 cpus6
+    Socket 7                 cpus7
+    Super Socket 7           cpussup7
+
+The -z and +x parts define two normals. The first normal (-z, in this case)
+points in the direction into which the connector - and the component of which
+the connector is part - moves when plugged into its corresponding receptacle
+(e.g. a female PCI connector). The direction of this normal depends on which
+way the component model is oriented - in this example, if we assume that the
+component is a sound card (or any such flat component with a card edge
+connector) that we've exported from our 3D modeling program in an orientation
+in which the card's front face points upward (+Y) and its PCI connector toward
+-Z, its direction of plugging via this connector would be along the negative Z
+axis. PCbi will use this information to rotate the component to face the
+correct way when plugged into a receiving connector.
+
+The second normal (+x, in this case) points nominally toward the right side of
+the component. In practice, this normal allows the component to be correctly
+oriented with the receiving connector - e.g. to align a CPU with the notch on
+the CPU socket, or to ensure that a video card plugs in with its outputs
+facing the back of the case. For instance, the PCI connector on a motherboard
+will have this normal pointing along a specific axis, and when a component is
+plugged into that connector, the component's 3D model will be rotated so that
+its connector's corresponding normal also points in that direction.
+
+If these normals feel a bit confusing (they are), you can always mess around
+with PCbi's existing components' data (in the components/ directory; make a
+backup, first). Look for lines like "mesh,{m_cpus5_0.-y+x}", which define the
+component's connector properties, modify them, restart PCbi, and see which way
+the modified component points when plugged in or when something is plugged
+into it.
+
+Note that for each normal, only one axis is defined (in this example, -Z for
+one and +X for the other). This means that you are required to orient the
+component's mesh such that these normals can be defined with reference to only
+one of their axes, while the other two remain 0. Note also that the sign of
+the axis must be present in the mesh name regardless of whether it's positive
+or negative (so use +x instead of just x).
+
+If the mesh isn't a connector, its name must begin with the string "x_". So a
+sound card's body mesh might be called "x_base". For monitors, one mesh should
+be called "x_screen" - this mesh represents the surface onto which PCem's
+output will be rendered. For computer cases, one mesh should be called
+"x_button_case_power" - this mesh represents the power button with which the
+user can turn the computer on/off.
+
+One unit in 3D space is taken to be 1 millimeter. Likewise, the resolution of
+textures is to be 1 pixel per 1 mm. Thus, for a rectangular component 100 mm
+wide and 50 mm tall, its corresponding 3D mesh would be 100 units wide and 50
+units tall, and its texture 100 x 50 pixels. You should prefer integer units,
+rounding to the nearest mm as needed.
+
+The coordinate system in PCbi is as follows: +Z = forward, +Y = up, and +X =
+right.
+
+When exporting from Blender into OBJ, use the following settings:
+
+    - +Z forward
+    - +Y up
+    - Write normals
+    - Include UVs
+    - Write materials
+    - Triangulate faces
+    

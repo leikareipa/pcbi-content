@@ -1,0 +1,92 @@
+Title: Creating new components for PCbi
+Author: Tarpeeksi Hyvae Soft
+Published: 13 May 2020
+
+PCbi is modular: new components (video cards, CPUs, etc.) can be introduced by
+adding their corresponding .component files into PCbi's components/ directory.
+
+A component file is a plain-text file containing metadata about the component,
+as well as the component's 3D mesh and any textures associated with that. You
+can find PCbi's component files in the program's components/ directory - simply
+examining them in a text editor will give you a pretty good idea of how they
+work.
+
+To create new component files, you can use the obj2component app, available
+from https://www.tarpeeksihyvaesoft.com/pcbi/obj2component/.
+
+The rest of this text describes the basics of how to operate the obj2component
+app.
+
+In addition to the component's 3D meshes and textures, each .component file
+must specify the following component metadata:
+
+    Name: The component's name, e.g. "3dfx Voodoo2" or "Intel Pentium 60". The
+    name is limited to 256 characters.
+
+    Type: Which hardware category this component belongs to. The following
+    categories are available: "cpu", "video card", "video addon card" (e.g. the
+    3dfx Voodoo), "motherboard", "monitor", "ram stick", "sound card", "case".
+
+    PCbi parameters: Values and strings that provide structured information
+    about the component to PCbi. The number and type of parameters depends on
+    the component's type:
+
+        CPUs: 2 parameters (bus speed [MHz], multiplier)
+
+        Video cards: 1 (memory capacity [KB])
+
+        Monitors: 1 (aspect ratio [e.g. 16:10])
+
+        Cases: 3 (count of external 5.25" slots, count of external 3.5" slots,
+        count of internal 3.5" slots)
+
+        Motherboards: 1 (max memory capacity [KB])
+
+        RAM sticks: 2 (memory capacity [KB], count of populated sides)
+
+        Sound cards: 1 (memory capacity [KB])
+
+    PCem configuration: The values to be entered by PCbi into PCem's config
+    file to include this component in the emulated PC. Please see the existing
+    .component files to get a feel for what you should enter here.
+
+    Additional PCem configuration: Component-specific values to be entered by
+    PCbi into PCem's config file to include this component in the emulated PC.
+    Please see the existing .component files to get a feel for what you should
+    enter here.
+
+    UUID: A unique identifier by which PCbi can recognize this component. PCbi
+    supports version 4 UUIDs only.
+
+The obj2component app allows you to enter the above information via a simple
+web form. The app will also automatically generate a UUID for the component
+(not guaranteed to be unique across all of PCbi's components).
+
+You'll also need to provide the component's 3D model as a pair of OBJ and MTL
+files (the Wavefront OBJ format). Simply drag these two files together into the
+obj2component form's "3D model (OBJ + MTL)" field, or use the field's button to
+open a file selector dialog.
+
+    To learn how to create 3D component models, please read the accompanying
+    guide, 3d-modeling-for-components.txt.
+
+Once you've provided it with a 3D model, the app will ask you for any textures
+used in the model. Simply drag or select into the appropriate form field the
+corresponding image file for each texture.
+
+After you've imported an OBJ model into the obj2component form, you can view a
+live rendering of it by scrolling down the page. The rendering will update to
+reflect any textures you import, as well.
+
+Once all form fields are satisfied, you can press the form's "Export" button to
+download the component's .component file. Place this file in PCbi's components/
+directory and run or restart PCbi - your component should now be available.
+
+Note that you should take care to retain the UUID of any components you've
+released to other people or which you're using yourself. When you save a
+computer in PCbi, the components' UUIDs are what get written into the save
+file; thus, if you change a component's UUID (without also modifying the save
+file), PCbi can no longer recognize that component when attempting to load the
+computer file. The obj2component app will generate a new component UUID every
+time you reload the page, so you may need to manually restore the old UUID in
+the .component file after exporting.
