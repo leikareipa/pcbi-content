@@ -34,6 +34,9 @@ PCbi and can thus be used in component models:
     ------------------------------------------------
     CNR                      cnr
     VLB                      vlb
+    AGP 1.5 V                agp15
+    AGP 3.3 V                agp33
+    AGP Universal            agpuv
     PCI 32-bit               pci32
     PCI 64-bit               pci64
     ISA 8-bit                isa8
@@ -116,6 +119,10 @@ wide and 50 mm tall, its corresponding 3D mesh would be 100 units wide and 50
 units tall, and its texture 100 x 50 pixels. You should prefer integer units,
 rounding to the nearest mm as needed.
 
+The component listings in PCem's UI display a small preview image next to each
+component. The image shown will be the component's pixmap whose name contains
+the word "front". If the component has no such pixmap, no image will be shown.
+
 The coordinate system in PCbi is as follows: +Z = forward, +Y = up, and +X =
 right.
 
@@ -127,4 +134,10 @@ When exporting from Blender into OBJ, use the following settings:
     - Include UVs
     - Write materials
     - Triangulate faces
-    
+
+By default, Blender applies certain shading effects to 3D models in its preview
+windows - these effects aren't included when you export to OBJ, so you may find
+that your model's colors don't look the same in PCbi as they do in Blender. To
+fix this in Blender, make all materials Shadeless and set their diffuse
+intensity to 1, set the scene's display device to None, and give the scene a
+Hemi lamp.
