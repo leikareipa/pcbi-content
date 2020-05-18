@@ -1,7 +1,7 @@
 Title: 3D modeling PCbi components
 Author: Tarpeeksi Hyvae Soft
 Published: 24 Jan 2018
-Updated: 13 May 2020
+Updated: 18 May 2020
 
 The 3D component models in PCbi were created using Blender 2.7, exported into
 OBJ, and converted into a custom .component format for loading into PCbi. (See
