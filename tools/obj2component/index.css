@@ -1,0 +1,218 @@
+body
+{
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    font-family: sans-serif;
+    background-color: transparent;
+    background-size: 20px 20px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+}
+
+#render-preview
+{
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100vh;
+    background-color: transparent;
+    border-radius: 6px;
+    pointer-events: none;
+
+    /* The canvas will be revealed via code when appropriate.*/
+    display: none;
+}
+
+.main-container
+{
+    position: relative;
+    display: inline-block;
+    z-index: 3;
+    width: 572px;
+    background-color: transparent;
+}
+
+.card-shadow
+{
+    width: 550px;
+    height: 725px;
+    background-color: rgba(0, 0, 0, 0.062);
+    position: absolute;
+    left: -30px;
+    top: 14px;
+    border-radius: 6px;
+    transform: rotate(-2.5deg);
+}
+
+.html-page-form-container
+{
+    position: relative;
+    z-index: 3;
+    width: 500px;
+    height: auto;
+    display: inline-block;
+    margin: 0px;
+    padding: 34px;
+    background-color: white;
+    border: 1px solid lightgray;
+    border-radius: 6px;
+    margin-bottom: 40px;
+}
+
+.html-page-form-container hr
+{
+    border: none;
+    border-top: 1px solid lightgray;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    width: 95%;
+}
+
+.html-page-form-container button
+{
+    margin-top: 25px;
+    margin-bottom: 5px;
+    padding: 8px;
+}
+
+.html-page-form-container > header
+{
+    margin-bottom: 35px;
+    padding: 0;
+    font-weight: bold;
+}
+
+.html-page-form-container > form
+{
+    height: 100%;
+    background-color: white;
+    transition: height 2s;
+}
+
+.html-page-form-container > form > input
+{
+    box-sizing: border-box;
+}
+
+.html-page-form-container > form > input:read-only
+{
+    border-style: dashed;
+    outline: none;
+}
+
+.html-page-form-container > form > label
+{
+    display: block;
+    text-align: left;
+    margin: 5px 0;
+}
+
+.html-page-form-container > form > input, select
+{
+    margin-bottom: 15px;
+    background-color: white;
+    width: 100%;
+    border-radius: 3px;
+    border: none;
+    padding: 11px;
+    border: 1px solid lightgray;
+}
+
+.html-page-form-container > form > select
+{
+    -moz-appearance: none;
+    -webkit-appearance: none;
+}
+
+.html-page-form-container > form > input[type="file"]
+{
+    padding: 10px 7px;
+}
+
+.html-page-form-container > form > .footnote
+{
+    margin-top: 10px;
+    text-align: left;
+    color: dimgray;
+    padding: 5px;
+}
+
+.html-page-form-container .track-metadata
+{
+    margin-bottom: 14px;
+}
+
+.html-page-form-container .round-button::after
+{
+    font-family: "Font Awesome 5 Free";
+    font-weight: bold;
+    content: "\f00c";
+    display: inline-block;
+    animation: none;
+
+    /* Center the icon - without this, spin rotation will appear off-center.*/
+    padding-left: 1px;
+    padding-bottom: 1px;
+}
+
+.html-page-form-container .round-button.icon-right-arrow::after
+{
+    content: "\f061";
+}
+
+/* We assume that the button is disabled due to being clicked - so we'll display
+ * a loading animation while the button's action proceeds.*/
+.html-page-form-container .round-button:disabled::after
+{
+    animation: fa-spin 1.5s infinite linear;
+}
+
+.html-page-form-container .round-button.blocked::after
+{
+    font-family: "Font Awesome 5 Free";
+    font-weight: bold;
+    content: "\f00d";
+    display: inline-block;
+    animation: none;
+
+    /* Center the icon - without this, spin rotation will appear off-center.*/
+    padding-left: 1px;
+    padding-bottom: 1px;
+}
+
+.html-page-form-error-string
+{
+    font-weight: bold;
+    color: rgb(223, 0, 0);
+    padding: 25px;
+    margin-bottom: 35px;
+    margin-top: -30px; /* Negate header's bottom margin.*/
+    background-color: rgba(255, 0, 0, 0.055);
+}
+
+/* For error strings inside <form> elements.*/
+.html-page-form-error-string.in-form
+{
+    font-weight: normal;
+    margin: 0;
+    margin-bottom: -25px;
+}
+
+.html-page-form-error-string::before
+{
+    font-family: "Font Awesome 5 Free";
+    padding-right: 5px;
+    font-weight: bold;
+    content: "\f06a";
+}
+
+.html-page-form-error-string::after
+{
+    content: ".";
+}
+
+.html-page-form-error-string.in-form::after
+{
+    content: "";
+}

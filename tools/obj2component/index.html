@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="index.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>PCbi Component Creator - Tarpeeksi Hyvae Soft</title>
+        </title>
+    </head>
+    <body>
+        <div class="main-container">
+            <div id="component-form-shadow"
+                 class="card-shadow"></div>
+
+            <div id="component-form-container"
+                 class="html-page-form-container">
+                <header>
+                    PCbi Component Creator
+                </header>
+
+                <form id="component-form"
+                    onsubmit="save_exported_component(); return false;">
+                    <label for="component-name">Component name</label>
+                    <input type="text"
+                           id="component-name"
+                           name="component-name"
+                           placeholder="Example: S3 ViRGE/DX"
+                           maxlength="256"
+                           required>
+
+                    <label for="component-type">Type</label>
+                    <select id="component-type"
+                            name="component-type"
+                            required>
+                        <option value="case">Case</option>
+                        <option value="cpu">CPU</option>
+                        <option value="monitor">Monitor</option>
+                        <option value="motherboard">Motherboard</option>
+                        <option value="ram stick">RAM stick</option>
+                        <option value="sound card">Sound card</option>
+                        <option value="video addon card">Video add-on card</option>
+                        <option value="video card">Video card</option>
+                    </select>
+
+                    <label id="component-uuid-label"
+                           for="component-uuid"
+                           style="display: none">UUID</label>
+                    <input type="text"
+                           id="component-uuid"
+                           name="component-uuid"
+                           style="display: none"
+                           required
+                           readonly>
+
+                    <label for="component-params">PCbi parameters</label>
+                    <input type="text"
+                           id="component-params"
+                           name="component-params"
+                           placeholder="Example: 11, 2"
+                           required>
+
+                    <label for="component-pcem-config">PCem configuration</label>
+                    <input type="text"
+                           id="component-pcem-config"
+                           name="component-pcem-config"
+                           maxlength="2048"
+                           placeholder="Example: gfxcard = virge375, video_speed = 5">
+
+                    <label for="component-pcem-config-extra">Additional PCem configuration</label>
+                    <input type="text"
+                           id="component-pcem-config-extra"
+                           name="component-pcem-config-extra"
+                           maxlength="2048"
+                           placeholder="Example: [S3 ViRGE/DX], memory = 4, bilinear = 1, dithering = 1">
+
+                    <label for="input-mesh">
+                        <i class="fas fa-fw fa-sm fa-cube"
+                           style="color: rgb(4, 185, 134);">
+                        </i>
+                        3D model (OBJ + MTL)</label>
+                    <input type="file"
+                           id="input-mesh"
+                           name="input-mesh"
+                           accept=".obj, .mtl"
+                           multiple
+                           required>
+
+                    <button id="export-button"
+                            type="submit">
+                        Create
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <canvas id="render-preview"></canvas>
+
+        <script src="./js/obj_to_component_meshes.js"></script>
+        <script src="./js/save_exported_component.js"></script>
+        <script src="./js/image_to_component_pixmap.js"></script>
+        <script src="./js/retro-ngon/rngon.cat.js"></script>
+        <script src="./js/uuidgen.js"></script>
+        <script src="./js/file-saver/FileSaver.js"></script>
+        <script>
+            document.getElementById("component-form").reset();
+            document.getElementById("component-uuid").value = generate_uuid_v4();
+
+            // Component meshes we've loaded in, in the retro n-gon renderer's format.
+            let rngonPolygons = [];
+
+            // Any component meshes we've loaded in from their OBJ file, converted into
+            // PCbi's format.
+            let convertedMeshes = [];
+
+            // Any textures we've loaded in, converted into PCbi's format.
+            let convertedPixmaps = [];
+
+            // A texture used on polygons which have a texture but whose texture data has
+            // not yet been loaded in.
+            const placeholderRngonTexture = Rngon.texture_rgba({
+                width: 2,
+                height: 1,
+                pixels: [127, 127, 127, 255,
+                         200, 200, 200, 255,],
+            });
+
+            // Update the render preview at the display's refresh rate.
+            (function render_loop(frameCount = 0)
+            {
+                const mesh = Rngon.mesh(rngonPolygons,
+                {
+                    rotation: Rngon.rotation_vector(70, (frameCount / 3), (frameCount / 2)),
+                });
+
+                Rngon.render("render-preview", [mesh],
+                {
+                    cameraPosition: Rngon.translation_vector(0, 0, -500),
+                    perspectiveCorrectTexturing: true,
+                    nearPlane: 1,
+                    farPlane: 10000,
+                    scale: 0.5,
+                });
+
+                window.requestAnimationFrame(()=>render_loop(frameCount + 1));
+            })();
+
+            // When the user selects an OBJ file.
+            const meshInput = document.getElementById("input-mesh");
+            meshInput.onchange = async ()=>
+            {
+                // An array of unique texture names in this OBJ model.
+                let textureNames = [];
+
+                // Reset our texture buffers.
+                {
+                    const textureInputContainers = [...document.querySelectorAll(".texture-input-label"),
+                                                    ...document.querySelectorAll(".texture-input-field")];
+
+                    for (const container of textureInputContainers)
+                    {
+                        container.remove();
+                    }
+
+                    convertedPixmaps = [];
+
+                    document.getElementById("component-form-shadow").style.height = `${document.getElementById("component-form-container").offsetHeight + 24}px`;
+                }
+
+                const objFile = ([...meshInput.files].filter(file=>file.name.endsWith(".obj"))[0] || null)
+                const mtlFile = ([...meshInput.files].filter(file=>file.name.endsWith(".mtl"))[0] || null);
+
+                if ((meshInput.files.length != 2) ||
+                    (objFile === null) ||
+                    (mtlFile === null))
+                {
+                    if (meshInput.files.length)
+                    {
+                        window.alert("Please select two files: (1) an OBJ file, and (2) its corresponding MTL file.");
+                    }
+
+                    meshInput.value = "";
+                    document.getElementById("render-preview").style.display = "none";
+                    
+                    return;
+                }
+
+                try
+                {
+                    [convertedMeshes, textureNames, rngonPolygons] = await convert_obj_to_component_meshes(objFile, mtlFile);
+
+                    // For any polygons that have a texture, assign them the placeholder texture.
+                    for (let i = 0; i < rngonPolygons.length; i++)
+                    {
+                        if (rngonPolygons[i].material.textureName.length)
+                        {
+                            rngonPolygons[i].material.texture = placeholderRngonTexture;
+                        }
+                    }
+
+                    // Add a DOM input field for each texture.
+                    {
+                        for (const textureName of textureNames)
+                        {
+                            const container = document.getElementById("component-form");
+
+                            const label = document.createElement("label");
+                            label.setAttribute("for", `input-texture-${textureName}`);
+                            label.innerHTML = `<i class="fas fa-fw fa-sm fa-camera" style="color: rgb(4, 185, 134);"></i> Texture: ${textureName}`;
+                            label.setAttribute("class", "texture-input-label");
+
+                            const input = document.createElement("input");
+                            input.setAttribute("type", "file");
+                            input.setAttribute("name", `input-texture-${textureName}`);
+                            input.setAttribute("accept", "image/*");
+                            input.setAttribute("required", "true");
+                            input.setAttribute("class", "texture-input-field");
+                            input.onchange = async()=>
+                            {
+                                const imageFile = input.files[0];
+                                
+                                if (!imageFile)
+                                {
+                                    for (let i = 0; i < rngonPolygons.length; i++)
+                                    {
+                                        if (rngonPolygons[i].material.textureName === textureName)
+                                        {
+                                            rngonPolygons[i].material.texture = placeholderRngonTexture;
+                                        }
+                                    }
+
+                                    delete convertedPixmaps[textureName];
+
+                                    return;
+                                }
+
+                                const [pixmap, rngonTexture] = await convert_image_to_component_pixmap(imageFile);
+
+                                convertedPixmaps[textureName] = pixmap;
+
+                                for (let i = 0; i < rngonPolygons.length; i++)
+                                {
+                                    if (rngonPolygons[i].material.textureName === textureName)
+                                    {
+                                        rngonPolygons[i].material.texture = rngonTexture;
+                                    }
+                                }
+                            };
+
+                            const exportButton = document.getElementById("export-button");
+                            container.insertBefore(label, exportButton);
+                            container.insertBefore(input, exportButton);
+                        }
+
+                        document.getElementById("component-form-shadow").style.height = `${document.getElementById("component-form-container").offsetHeight + 24}px`;
+                    }
+
+                    document.getElementById("render-preview").style.display = "initial";
+                }
+                catch (error)
+                {
+                    window.alert("Oops! " + error);
+
+                    meshInput.value = "";
+                    document.getElementById("render-preview").style.display = "none";
+                    document.getElementById("component-form-shadow").style.height = `${document.getElementById("component-form-container").offsetHeight + 24}px`;
+
+                    convertedMeshes = [];
+                    textureNames = [];
+                    rngonPolygons = [];
+                }
+            };
+        </script>
+    </body>
+</html>
