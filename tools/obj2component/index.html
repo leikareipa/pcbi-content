@@ -10,8 +10,6 @@
     </head>
     <body>
         <div class="main-container">
-            <div id="component-form-shadow"
-                 class="card-shadow"></div>
 
             <div id="component-form-container"
                  class="html-page-form-container">
@@ -21,7 +19,7 @@
 
                 <form id="component-form"
                     onsubmit="save_exported_component(); return false;">
-                    <label for="component-name">Component name</label>
+                    <label for="component-name">Name</label>
                     <input type="text"
                            id="component-name"
                            name="component-name"
@@ -75,8 +73,7 @@
                            placeholder="Example: [S3 ViRGE/DX], memory = 4, bilinear = 1, dithering = 1">
 
                     <label for="input-mesh">
-                        <i class="fas fa-fw fa-sm fa-cube"
-                           style="color: rgb(4, 185, 134);">
+                        <i class="fas fa-fw fa-sm fa-cube">
                         </i>
                         3D model (OBJ + MTL)</label>
                     <input type="file"
@@ -94,7 +91,10 @@
             </div>
         </div>
 
-        <canvas id="render-preview"></canvas>
+        <div id="render-preview-container">
+            <div>3D Preview:</div>
+            <canvas id="render-preview"></canvas>
+        </div>
 
         <script src="./js/obj_to_component_meshes.js"></script>
         <script src="./js/save_exported_component.js"></script>
@@ -139,7 +139,7 @@
                     perspectiveCorrectTexturing: true,
                     nearPlane: 1,
                     farPlane: 10000,
-                    scale: 0.5,
+                    scale: 1,
                 });
 
                 window.requestAnimationFrame(()=>render_loop(frameCount + 1));
@@ -163,8 +163,6 @@
                     }
 
                     convertedPixmaps = [];
-
-                    document.getElementById("component-form-shadow").style.height = `${document.getElementById("component-form-container").offsetHeight + 24}px`;
                 }
 
                 const objFile = ([...meshInput.files].filter(file=>file.name.endsWith(".obj"))[0] || null)
@@ -180,7 +178,7 @@
                     }
 
                     meshInput.value = "";
-                    document.getElementById("render-preview").style.display = "none";
+                    document.getElementById("render-preview-container").style.display = "none";
                     
                     return;
                 }
@@ -206,7 +204,7 @@
 
                             const label = document.createElement("label");
                             label.setAttribute("for", `input-texture-${textureName}`);
-                            label.innerHTML = `<i class="fas fa-fw fa-sm fa-camera" style="color: rgb(4, 185, 134);"></i> Texture: ${textureName}`;
+                            label.innerHTML = `<i class="fas fa-fw fa-sm fa-image"></i> Texture: ${textureName}`;
                             label.setAttribute("class", "texture-input-label");
 
                             const input = document.createElement("input");
@@ -251,19 +249,16 @@
                             container.insertBefore(label, exportButton);
                             container.insertBefore(input, exportButton);
                         }
-
-                        document.getElementById("component-form-shadow").style.height = `${document.getElementById("component-form-container").offsetHeight + 24}px`;
                     }
 
-                    document.getElementById("render-preview").style.display = "initial";
+                    document.getElementById("render-preview-container").style.display = "initial";
                 }
                 catch (error)
                 {
                     window.alert("Oops! " + error);
 
                     meshInput.value = "";
-                    document.getElementById("render-preview").style.display = "none";
-                    document.getElementById("component-form-shadow").style.height = `${document.getElementById("component-form-container").offsetHeight + 24}px`;
+                    document.getElementById("render-preview-container").style.display = "none";
 
                     convertedMeshes = [];
                     textureNames = [];

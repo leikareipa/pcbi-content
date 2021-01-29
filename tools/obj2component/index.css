@@ -4,10 +4,11 @@ body
     margin-top: 40px;
     margin-bottom: 40px;
     font-family: sans-serif;
-    background-color: transparent;
-    background-size: 20px 20px;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+}
+
+#render-preview-container
+{
+    display: none; /* Will be revealed when appropriate.*/
 }
 
 #render-preview
@@ -19,9 +20,7 @@ body
     background-color: transparent;
     border-radius: 6px;
     pointer-events: none;
-
-    /* The canvas will be revealed via code when appropriate.*/
-    display: none;
+    image-rendering: pixelated;
 }
 
 .main-container
@@ -29,35 +28,24 @@ body
     position: relative;
     display: inline-block;
     z-index: 3;
-    width: 572px;
+    width: 630px;
     background-color: transparent;
-}
-
-.card-shadow
-{
-    width: 550px;
-    height: 725px;
-    background-color: rgba(0, 0, 0, 0.062);
-    position: absolute;
-    left: -30px;
-    top: 14px;
-    border-radius: 6px;
-    transform: rotate(-2.5deg);
 }
 
 .html-page-form-container
 {
     position: relative;
     z-index: 3;
-    width: 500px;
+    width: 100%;
     height: auto;
     display: inline-block;
     margin: 0px;
     padding: 34px;
     background-color: white;
-    border: 1px solid lightgray;
-    border-radius: 6px;
+    border: 2px solid black;
+    border-radius: 0;
     margin-bottom: 40px;
+    box-sizing: border-box;
 }
 
 .html-page-form-container hr
@@ -73,7 +61,21 @@ body
 {
     margin-top: 25px;
     margin-bottom: 5px;
-    padding: 8px;
+    padding: 12px 25px;
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 0;
+}
+
+.html-page-form-container button:active
+{
+    transform: translateX(1px) translateY(1px);
+}
+
+.html-page-form-container button:focus
+{
+    outline: none;
 }
 
 .html-page-form-container > header
@@ -108,15 +110,23 @@ body
     margin: 5px 0;
 }
 
-.html-page-form-container > form > input, select
+.html-page-form-container > form > input,
+.html-page-form-container > form > select
 {
     margin-bottom: 15px;
     background-color: white;
     width: 100%;
-    border-radius: 3px;
+    border-radius: 0;
     border: none;
-    padding: 11px;
-    border: 1px solid lightgray;
+    padding: 16px;
+    border: 1px solid black;
+}
+
+.html-page-form-container > form > input:focus,
+.html-page-form-container > form > select:focus
+{
+    outline: none;
+    box-shadow: 0 0 0 1px black;
 }
 
 .html-page-form-container > form > select
