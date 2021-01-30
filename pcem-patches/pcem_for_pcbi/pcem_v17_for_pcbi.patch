@@ -57,7 +57,7 @@ diff -crB 17/src/pc.c mod/17/src/pc.c
           done++;
 diff -crB 17/src/wx-sdl2.c mod/17/src/wx-sdl2.c
 *** 17/src/wx-sdl2.c	2020-12-01 22:40:51.000000000 +0200
---- mod/17/src/wx-sdl2.c	2021-01-29 05:53:25.325795000 +0200
+--- mod/17/src/wx-sdl2.c	2021-01-30 06:26:31.580072332 +0200
 ***************
 *** 135,146 ****
 --- 135,169 ----
@@ -206,10 +206,10 @@ diff -crB 17/src/wx-sdl2-status.c mod/17/src/wx-sdl2-status.c
           {
 diff -crB 17/src/wx-sdl2-video.c mod/17/src/wx-sdl2-video.c
 *** 17/src/wx-sdl2-video.c	2020-12-01 22:40:51.000000000 +0200
---- mod/17/src/wx-sdl2-video.c	2021-01-29 06:01:01.604501000 +0200
+--- mod/17/src/wx-sdl2-video.c	2021-01-30 06:39:32.775365619 +0200
 ***************
 *** 276,281 ****
---- 276,498 ----
+--- 276,505 ----
           screen_copy = NULL;
   }
   
@@ -342,8 +342,15 @@ diff -crB 17/src/wx-sdl2-video.c mod/17/src/wx-sdl2-video.c
 + 
 + // Added to interface with PCbi. Mounts a shared ISO file.
 + #include "wx-sdl2.h"
++ #include "cdrom-image.h"
 + static void pcbi_mount_shared_iso(void)
 + {
++         /* The shared ISO file always goes by the same filename, but its contents
++          * are likely to change between mountings. PCem, on the other hand, will
++          * silently ignore requests to re-mount an image by the same name, so we
++          * want to force PCem to forget the current mounted image's name.*/
++         image_path[0] = '\0';
++ 
 +         pcbi_mount_iso("pcbi_shared_image.iso");
 + 
 +         return;
@@ -435,7 +442,7 @@ diff -crB 17/src/wx-sdl2-video.c mod/17/src/wx-sdl2-video.c
           int render = 0;
 ***************
 *** 288,295 ****
---- 505,517 ----
+--- 512,524 ----
                           memcpy(&updated_rect_copy, &updated_rect, sizeof(updated_rect));
                           memcpy(screen_copy->dat + (updated_rect.y * screen_copy->w * 4), screen->dat + (updated_rect.y * screen->w * 4), updated_rect.h * screen->w * 4);
                   }
